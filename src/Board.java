@@ -1,6 +1,7 @@
 public class Board {
 	
 	private String[] board = new String[64];
+	private String[] coordinateBoard = new String[64];
 	
 	public void initializeBoard() {
 		
@@ -14,7 +15,20 @@ public class Board {
         board[58] = "W";
         board[60] = "E";
         board[62] = "R";
-		
+        
+        String[] letters = {"a", "b", "c", "d", "e", "f", "g", "h"};
+        
+        int k = 9; // Row count, decrement each time you iterate through 8 values
+        for(int i = 0; i < coordinateBoard.length; ++i) {
+        	int j = i % 8;
+        	
+        	if(j == 0) {
+        		--k; // On the first pass, this is reduced from 9 to 8 before actually writing anything to the coordinateBoard
+        	}
+        	
+        	coordinateBoard[i] = letters[j] + k;
+        
+        }
 	}
 	
 	public void drawBoard() {
@@ -45,103 +59,123 @@ public class Board {
 		
 	}
 	
-	public void movePiece(String piece, String direction) {
+	public void movePiece(String piece, String coordinates) {
 		
-		int piecePos = locatePiece(piece);
-		int newPos;
+		int oldPiecePos = locatePiece(piece);
+		int newPiecePos = locatePiece(coordinates, coordinateBoard);
+		int positionDifference = newPiecePos - oldPiecePos;
+		String direction = "";
 		boolean errorFlag = false;
+		
+		// Translate the position difference into a direction string
+		if(positionDifference == -9) {
+			direction = "ul";
+		}
+		else if(positionDifference == -7) {
+			direction = "ur";
+		}
+		else if(positionDifference == 7) {
+			direction = "dl";
+		}
+		else if(positionDifference == 9) {
+			direction = "dr";
+		}
 		
 		switch(direction) {
 			case "ul":
 						
-				newPos = piecePos -9;
+				newPiecePos = oldPiecePos -9;
 				
 				// Cannot move at left edge of board or if a piece is already occupying the new space
-				if(piecePos <= 7 || piecePos % 8 == 0 || hasPiece(newPos)) {
+				if(oldPiecePos <= 7 || oldPiecePos % 8 == 0 || hasPiece(newPiecePos)) {
 					System.out.println("Error: Invalid move");
 					errorFlag = true;
 					break;
 				}
 				
-				board[newPos] = piece;
+				board[newPiecePos] = piece;
 				break;
 				
 			case "ur":
 				
-				newPos = piecePos - 7;
+				newPiecePos = oldPiecePos - 7;
 				
 				// Cannot move at right edge of board or if a piece is already occupying the new space
-				if(piecePos <= 7 || piecePos % 8 == 7 || hasPiece(newPos)) {
+				if(oldPiecePos <= 7 || oldPiecePos % 8 == 7 || hasPiece(newPiecePos)) {
 					System.out.println("Error: Invalid move");
 					errorFlag = true;
 					break;
 				}
 				
-				board[newPos] = piece;
+				board[newPiecePos] = piece;
 				break;
 			
 			case "dl":
 			
-				newPos = piecePos + 7;
+				newPiecePos = oldPiecePos + 7;
 				
 				// Cannot move at left edge of board or if a piece is already occupying the new space
-				if(piecePos >= 56 || piecePos % 8 == 0 || hasPiece(newPos)) {
+				if(oldPiecePos >= 56 || oldPiecePos % 8 == 0 || hasPiece(newPiecePos)) {
 					System.out.println("Error: Invalid move");
 					errorFlag = true;
 					break;
 				}
 				
-				board[newPos] = piece;
+				board[newPiecePos] = piece;
 				break;
 				
 			case "dr":
 				
-				newPos = piecePos + 9;
+				newPiecePos = oldPiecePos + 9;
 				
 				// Cannot move at right edge of board or if a piece is already occupying the new space
-				if(piecePos >= 56 || piecePos % 8 == 7 || hasPiece(newPos)) {
+				if(oldPiecePos >= 56 || oldPiecePos % 8 == 7 || hasPiece(newPiecePos)) {
 					System.out.println("Error: Invalid move");
 					errorFlag = true;
 					break;
 				}
 				
-				board[newPos] = piece;
+				board[newPiecePos] = piece;
 				break;
 				
 			default:
 				System.out.println("Error: Invalid move");
 				errorFlag = true;
-			
-
-				
 		}
 		
 		if(!errorFlag) {
-			board[piecePos] = "O";
+			board[oldPiecePos] = "O";
 		}
 		
 	}
 	
 	public String[] determineMoves(String piece) {
 		
+		int piecePosition = locatePiece(piece);
+		String newCoordinates = "";
+		
 		String[] validMoves = new String[4];
 		
 		if(validateMove(piece, "ul")) {
-			System.out.println("ul: Up-left");
-			validMoves[0] = "ul";
+			newCoordinates = coordinateBoard[translatePiece(piecePosition, "ul")];
+			System.out.println("Up-left: " + newCoordinates.toUpperCase());
+			validMoves[0] = newCoordinates;
 		}
 		if(validateMove(piece, "ur")) {
-			System.out.println("ur: Up-right");
-			validMoves[1] = "ur";
+			newCoordinates = coordinateBoard[translatePiece(piecePosition, "ur")];
+			System.out.println("Up-right: " + newCoordinates.toUpperCase());
+			validMoves[1] = newCoordinates;
 		}
 		// Only allow L to move down-left or down-right
 		if(validateMove(piece, "dl") && piece.equals("L")) {
-			System.out.println("dl: Down-left");
-			validMoves[2] = "dl";
+			newCoordinates = coordinateBoard[translatePiece(piecePosition, "dl")];
+			System.out.println("Down-left: " + newCoordinates.toUpperCase());
+			validMoves[2] = newCoordinates;
 		}
 		if(validateMove(piece, "dr") && piece.equals("L")) {
-			System.out.println("dr: Down-right");
-			validMoves[3] = "dr";
+			newCoordinates = coordinateBoard[translatePiece(piecePosition, "dr")];
+			System.out.println("Down-right: " + newCoordinates.toUpperCase());
+			validMoves[3] = newCoordinates;
 		}
 		
 		return validMoves;
@@ -177,8 +211,6 @@ public class Board {
 			return false;
 		}
 		else if(player.equals("player2")) {
-			
-			int piecePos = locatePiece("L");
 			
 			// If L cannot move, player2 wins
 			if(!validateMove("L", "ul") && !validateMove("L", "ur") && !validateMove("L", "dl") && !validateMove("L", "dr")) {
@@ -257,12 +289,40 @@ public class Board {
 		
 		return -1;
 	}
+
+	// Overload of previous function to allow for locating on the coordinate board
+	private int locatePiece(String value, String[] myBoard) {
+		for(int i = 0; i < myBoard.length; ++i) {
+			if (myBoard[i].equals(value)) {
+				return i;
+			}
+		}
+		
+		return -1;
+	}
 	
 	private boolean hasPiece(int position) {
 		if(board[position].equals("L") || board[position].equals("Q") || board[position].equals("W") || board[position].equals("E") || board[position].equals("R")) {
 			return true;
 		}
 		return false;
+	}
+	
+	// Given a position on the board, determines your new position on the board array given the direction you move in
+	// Make sure you validate the move before using this function
+	private int translatePiece(int oldPosition, String direction) {
+		switch(direction) {
+			case "ul":
+				return oldPosition -9;
+			case "ur":
+				return oldPosition - 7;
+			case "dl":
+				return oldPosition + 7;
+			case "dr":
+				return oldPosition + 9;
+			default:
+				return -1;
+		}
 	}
 	
 	private static String draw(String c) {

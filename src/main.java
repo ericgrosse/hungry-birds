@@ -38,6 +38,7 @@ public class main {
 	            	
 	    	        	System.out.println("Player 1's move. Where would you like to move L?");
 	    	        	String[] moves = board.determineMoves("L");
+	    	        	
 	    	        	input = keyboard.next().toLowerCase();
 	    	        	
 	    	        	if (Arrays.asList(moves).contains(input)) {
