@@ -4,20 +4,33 @@
  * 
  */
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class main {
 
+	public static void printArrayList(ArrayList<String> arr) {
+		for(int i = 0; i < arr.size(); ++i) {
+			if(i == arr.size() - 1) {
+				System.out.print(arr.get(i).toUpperCase());
+			}
+			else {
+				System.out.print(arr.get(i).toUpperCase() + ", ");
+			}
+		}
+	}
+	
     public static void main(String[] args) {
     	
-    	Board board = new Board();        
-    	board.initializeBoard();
+    	Board board = new Board();
         
         // Loop for the entire game
         while(true) {
         	
         	Scanner keyboard = new Scanner(System.in);
+        	String junk; // Used to collect unwanted newlines from the scanner
         	String input;
         	String chosenPiece;
         	
@@ -37,12 +50,19 @@ public class main {
 	            	while(true) {
 	            	
 	    	        	System.out.println("Player 1's move. Where would you like to move L?");
-	    	        	String[] moves = board.determineMoves("L");
+	    	        	
+	    	        	String larvaCoordinates = board.locatePiece("L");
+	    	        	ArrayList<String> moves = board.determineMoves(larvaCoordinates);
+	    	        	
+	    	        	System.out.print("Possible moves: ");
+	    	        	printArrayList(moves);
+	    	        	System.out.println();
 	    	        	
 	    	        	input = keyboard.next().toLowerCase();
+	    	        	junk = keyboard.nextLine();
 	    	        	
-	    	        	if (Arrays.asList(moves).contains(input)) {
-	    	        		board.movePiece("L", input);
+	    	        	if (moves.contains(input)) {
+	    	        		board.movePiece(larvaCoordinates, input);
 	    	        		board.drawBoard();
 	    	        		
 	    	        		if(board.checkForWin("player1")) {
@@ -57,44 +77,33 @@ public class main {
 	    	        	}
 	            	
 	            	}
-	            	
-	            	// Player2 loop (to choose piece)
-	            	while(true) {
-	            	
-	    	        	System.out.println("Player 2's move. Which piece would you like to move?");
-	    	        	System.out.println("Available options: ");
-	    	        	String[] birds =  board.showAvailableBirds();
-	    	        	System.out.println();
-	    	        	chosenPiece = keyboard.next().toUpperCase();
-	    	        	
-	    	        	if (Arrays.asList(birds).contains(chosenPiece)) {
-	    	        		break;
-	    	        	}
-	    	        	else {
-	    	        		System.out.println("Invalid selection. Please choose one of Q, W, E or R.");
-	    	        	}
-	            	
-	            	}
-	            	
-	            	// Player2 loop (for the rest)
+
+	            	// Player2 loop
 	            	while(true) {
 	            		
-	            		System.out.println("Where would you like to move " + chosenPiece + "?");
-	    	        	String[] moves = board.determineMoves(chosenPiece);
-	    	        	input = keyboard.next().toLowerCase();
+	            		System.out.println("Player 2's move. Where would you like to move one of your birds? Please specify two co-ordinates (bird's current position and bird's new position)");
+	            		ArrayList<String> moves = board.determineBirdMoves();
+	            		
+	            		System.out.print("Possible moves: ");
+	            		printArrayList(moves);
+	            		System.out.println();
+	            		
+	            		input = keyboard.nextLine().toLowerCase();
 	    	        	
-	    	        	if (Arrays.asList(moves).contains(input)) {
-	    	        		board.movePiece(chosenPiece, input);
-	    	        		board.drawBoard();
-	    	        		if(board.checkForWin("player2")) {
-	    	        			System.out.println("Player 2 wins");
-	    	        			System.exit(0);
-	    	        		}
-	    	        		break;
-	    	        	}
-	    	        	else {
-	    	        		System.out.println("Invalid move. Please select one of the moves offered.");
-	    	        	}
+	    	        	StringTokenizer st = new StringTokenizer(input);
+	    	        	String input1 = st.nextToken();
+	    	        	String input2 = st.nextToken();
+	    	        	
+    	        		boolean isValidMove = board.movePiece(input1, input2);
+    	        		board.drawBoard();
+    	        		
+    	        		if(board.checkForWin("player2")) {
+    	        			System.out.println("Player 2 wins");
+    	        			System.exit(0);
+    	        		}		
+    	        		if(isValidMove) {
+    	        			break;
+    	        		}
 	            	}
         		}
         	}
