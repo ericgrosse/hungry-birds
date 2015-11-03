@@ -1,34 +1,36 @@
+package utils;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Board {
-	
+
 	private String[] board = new String[64];
 	private static String[] coordinateBoard = new String[64];
-	
+
 	/**
 	 * Constructors
 	 */
-	
+
 	public Board() {
 		this.initializeBoard();
 	}
-	
+
 	public Board(Board b) {
+		this.initializeBoard();
 		this.setBoard(b.getBoard());
 	}
-	
+
 	/**
 	 * AI Functionality
 	 */
-	
+
 	// Calculates the heuristic value for the current board configuration
 	public int heuristic() {
-		
+
 		int larvaPosition = 0;
 		int[] birdPositions = new int[4];
 		int j = 0;
-		
+
 		// Determine the location of all your pieces
 		for(int i = 0; i < board.length; ++i) {
 			if(board[i].equals("L")) {
@@ -39,45 +41,88 @@ public class Board {
 				++j;
 			}
 		}
-		
+
 		int birdPositionSum = birdPositions[0] + birdPositions[1] + birdPositions[2] + birdPositions[3];
 		int result = larvaPosition - birdPositionSum;
-		
+
 		return result;
-		
+
 	}
 
-	
+	public static String compareBoards(Board b1, Board b2) {
+		
+		String[] board1 = b1.getBoard();
+		String[] board2 = b2.getBoard();
+		
+		int larvaPosition1 = 0;
+		int larvaPosition2 = 0;
+		ArrayList<Integer> birdPositions1 = new ArrayList<Integer>();
+		ArrayList<Integer> birdPositions2 = new ArrayList<Integer>();
+
+		for(int i = 0; i < board1.length; ++i) {
+			if(board1[i].equals("L")) {
+				larvaPosition1 = i;
+			}
+			else if(board1[i].equals("B")) {
+				birdPositions1.add(i);
+			}
+			if(board2[i].equals("L")) {
+				larvaPosition2 = i;
+			}
+			else if(board2[i].equals("B")) {
+				birdPositions2.add(i);
+			}
+		}
+		
+		if(larvaPosition1 != larvaPosition2) {
+			String larvaCoordinates1 = coordinateBoard[larvaPosition1];
+			String larvaCoordinates2 = coordinateBoard[larvaPosition2];
+			return (larvaCoordinates1 + larvaCoordinates2).toUpperCase();
+		}
+		
+		ArrayList<Integer> birdPositions1Diff = new ArrayList<Integer>(birdPositions1);
+		ArrayList<Integer> birdPositions2Diff = new ArrayList<Integer>(birdPositions2);
+
+		birdPositions1Diff.removeAll(birdPositions2);
+		birdPositions2Diff.removeAll(birdPositions1);
+		
+		if(birdPositions1Diff.size() == 1 && birdPositions2Diff.size() == 1) {
+			return ( coordinateBoard[birdPositions1Diff.get(0)] + coordinateBoard[birdPositions2Diff.get(0)] ).toUpperCase();
+		}
+		
+		return "";
+	}
+
 	/**
 	 * Board logic
 	 */
-	
+
 	public boolean movePiece(String coordinates1, String coordinates2) {
-		
+
 		int oldPosition = coordinatesToPosition(coordinates1);
 		int newPosition = coordinatesToPosition(coordinates2);
-		
+
 		// Validate coordinate1
 		if(oldPosition == -1) {
 			System.out.println("Error: Position " + coordinates1 + " was not found on the board");
 			return false;
 		}
-		
+
 		// Validate that a piece is actually selected
 		if( !( board[oldPosition].equals("L") || board[oldPosition].equals("B") ) ) {
 			System.out.println("Error: A valid piece was not selected through coordinates " + coordinates1.toUpperCase());
 			return false;
 		}
-		
+
 		// Validate coordinate2
 		if(newPosition == -1) {
 			System.out.println("Error: Position " + coordinates2 + " was not found on the board");
 			return false;
 		}
-		
+
 		int positionDifference = oldPosition - newPosition;
 		String direction = directionFromPositionDifference(positionDifference);
-		
+
 		if(validateMove(coordinates1, direction)) {
 			board[newPosition] = board[oldPosition];
 			board[oldPosition] = "O";
@@ -86,12 +131,12 @@ public class Board {
 		System.out.println("Error: Invalid move");
 		return false;
 	}
-	
+
 	public ArrayList<String> determineMoves(String coordinates) {
-		
+
 		int piecePosition = coordinatesToPosition(coordinates);
 		ArrayList<String> validMoves = new ArrayList<String>();
-		
+
 		if(validateMove(coordinates, "ul")) {
 			validMoves.add(translatePiece(coordinates, "ul"));
 		}
@@ -105,16 +150,16 @@ public class Board {
 		if(validateMove(coordinates, "dr") && board[piecePosition].equals("L")) {
 			validMoves.add(translatePiece(coordinates, "dr"));
 		}
-		
+
 		return validMoves;
-		
+
 	}
-	
+
 	private boolean validateMove(String coordinates, String direction) {
-		
+
 		int piecePos = coordinatesToPosition(coordinates);
 		int newPos;
-		
+
 		switch(direction) {
 		case "ul":
 			newPos = piecePos -9;
@@ -149,7 +194,7 @@ public class Board {
 		}
 		return true;
 	}
-	
+
 	private ArrayList<String> findAvailableBirdCoordinates() {
 		String[] birdCoordinates = new String[4];
 		ArrayList<String> birdValidatedCoordinates = new ArrayList<String>();
@@ -169,11 +214,11 @@ public class Board {
 		}
 		return birdValidatedCoordinates;
 	}
-	
+
 	public ArrayList<String> determineBirdMoves() {
 		ArrayList<String> availableBirds = findAvailableBirdCoordinates();
 		ArrayList<String> allBirdMoves = new ArrayList<String>();
-		
+
 		for(int i = 0; i < availableBirds.size(); ++i) {
 			ArrayList<String> birdMoves = determineMoves(availableBirds.get(i));
 			for(int j = 0; j < birdMoves.size(); ++j) {
@@ -182,37 +227,55 @@ public class Board {
 		}
 		return allBirdMoves;
 	}
-	
+
 	public boolean checkForWin(String player) {
-		
+
 		String player1Coordinates = locatePiece("L");
 		int player1Pos = coordinatesToPosition(player1Coordinates);
+		ArrayList<String> birds = new ArrayList<String>();
+		
+		// Retrieve the coordinates of all the birds
+		for(int i = 0; i < board.length; ++i) {
+			if(board[i].equals("B")) {
+				birds.add(coordinateBoard[i]);
+			}
+		}
 		
 		if(player.equals("player1")) {
-			
+
 			// If L is on the last row, player1 wins
 			if(player1Pos >= 56) {
 				return true;
 			}
-			// TODO: If none of the birds can move, player 1 also presumably wins
 			
+			boolean flag = true;
+			for(String bird: birds) {
+				if(validateMove(bird, "ul") || validateMove(bird, "ur")) {
+					flag = false; // If any bird can move in either permitted direction, set the flag to false
+				}
+			}
+			// If none of the birds can move, player1 wins
+			if(flag == true) {
+				return true;
+			}
+
 			return false;
 		}
 		else if(player.equals("player2")) {
-			
+
 			// If L cannot move, player2 wins
 			if(!validateMove(player1Coordinates, "ul") && !validateMove(player1Coordinates, "ur") && !validateMove(player1Coordinates, "dl") && !validateMove(player1Coordinates, "dr")) {
 				return true;
 			}
-			
+
 			return false;
-			
+
 		}
 		else {
 			return false;
 		}
 	}
-	
+
 	// Only useful for locating the position of piece L
 	public String locatePiece(String piece) {
 		for(int i = 0; i < board.length; ++i) {
@@ -220,7 +283,7 @@ public class Board {
 				return coordinateBoard[i];
 			}
 		}
-		
+
 		return "";
 	}
 
@@ -230,23 +293,23 @@ public class Board {
 		}
 		return false;
 	}
-	
+
 	private String translatePiece(String coordinates, String direction) {
 		int oldPosition = coordinatesToPosition(coordinates);
 		switch(direction) {
-			case "ul":
-				return positionToCoordinates(oldPosition -9);
-			case "ur":
-				return positionToCoordinates(oldPosition - 7);
-			case "dl":
-				return positionToCoordinates(oldPosition + 7);
-			case "dr":
-				return positionToCoordinates(oldPosition + 9);
-			default:
-				return "";
+		case "ul":
+			return positionToCoordinates(oldPosition -9);
+		case "ur":
+			return positionToCoordinates(oldPosition - 7);
+		case "dl":
+			return positionToCoordinates(oldPosition + 7);
+		case "dr":
+			return positionToCoordinates(oldPosition + 9);
+		default:
+			return "";
 		}
 	}
-	
+
 	private int coordinatesToPosition(String coordinates) {
 		coordinates = coordinates.toLowerCase();
 		for(int i = 0; i < coordinateBoard.length; ++i) {
@@ -256,11 +319,11 @@ public class Board {
 		}
 		return -1;
 	}
-	
+
 	private String positionToCoordinates(int position) {
 		return coordinateBoard[position];
 	}
-	
+
 	private String directionFromPositionDifference(int value) {
 		if(value == 9) {
 			return "ul";
@@ -278,93 +341,102 @@ public class Board {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Board UI
 	 */
-	
+
 	public void initializeBoard() {
-		
-        for(int i = 0; i < board.length; ++i) {
-        	board[i] = "O";
-        }
-        
-        board[51] = "L";
-        // Each bird given a distinct letter in order to simplify the UI
-        board[56] = "B";
-        board[58] = "B";
-        board[60] = "B";
-        board[62] = "B";
-        
-        String[] letters = {"a", "b", "c", "d", "e", "f", "g", "h"};
-        
-        int k = 9; // Row count, decrement each time you iterate through 8 values
-        for(int i = 0; i < coordinateBoard.length; ++i) {
-        	int j = i % 8;
-        	
-        	if(j == 0) {
-        		--k; // On the first pass, this is reduced from 9 to 8 before actually writing anything to the coordinateBoard
-        	}
-        	
-        	coordinateBoard[i] = letters[j] + k;
-        
-        }
-	}
-	
-	public void drawBoard() {
-		
-		drawVeritcalBorder();
-		System.out.println();
+
+		// Initialize the regular board
 		
 		for(int i = 0; i < board.length; ++i) {
-		
-			// Draws left border
-        	if(i % 8 == 0) {
-        		System.out.print((8 - i/8) + draw(" ") + draw(board[i]));
-        	}
-			
-        	// Draws right border
-        	else if(i % 8 == 7) {
-        		System.out.println(draw(board[i]) + draw(" ") + (8 - i/8));
-        	}
-        	
-        	else {
-        		System.out.print(draw(board[i]));
-        	}
-        	
+			board[i] = "O";
 		}
+
+		board[51] = "L";
+		board[56] = "B";
+		board[58] = "B";
+		board[60] = "B";
+		board[62] = "B";
+
+		// Test values
+		//board[1] = "B";
+		//board[3] = "B";
+		//board[5] = "B";
+		//board[14] = "B";
 		
+		// Initialize the coordinate board
+		
+		String[] letters = {"a", "b", "c", "d", "e", "f", "g", "h"};
+
+		int k = 9; // Row count, decrement each time you iterate through 8 values
+		for(int i = 0; i < coordinateBoard.length; ++i) {
+			int j = i % 8;
+
+			if(j == 0) {
+				--k; // On the first pass, this is reduced from 9 to 8 before actually writing anything to the coordinateBoard
+			}
+
+			coordinateBoard[i] = letters[j] + k;
+
+		}
+	}
+
+	public void drawBoard() {
+
+		drawVeritcalBorder();
+		System.out.println();
+
+		for(int i = 0; i < board.length; ++i) {
+
+			// Draws left border
+			if(i % 8 == 0) {
+				System.out.print((8 - i/8) + draw(" ") + draw(board[i]));
+			}
+
+			// Draws right border
+			else if(i % 8 == 7) {
+				System.out.println(draw(board[i]) + draw(" ") + (8 - i/8));
+			}
+
+			else {
+				System.out.print(draw(board[i]));
+			}
+
+		}
+
 		System.out.println();
 		drawVeritcalBorder();
-		
+
 	}
-	
+
 	private static String draw(String c) {
 		return " " + c + " ";
 	}
-	
+
 	private static void drawVeritcalBorder() {
 		System.out.println(draw("   ") + "A  B  C  D  E  F  G  H");
 	}
-	
+
 	/**
 	 * Getters and setters
 	 */
-	
+
 	public String[] getBoard() {
 		String[] boardCopy = new String[64];
-		
+
 		for(int i = 0; i < boardCopy.length; ++i) {
 			boardCopy[i] = board[i];
 		}
-		
+
 		return boardCopy;
 	}
-	
+
 	public void setBoard(String[] board) {
 		for(int i = 0; i < board.length; ++i) {
 			this.board[i] = board[i]; 
 		}
 	}
-	
+
 }
