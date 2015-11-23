@@ -125,7 +125,10 @@ public class TreeNode {
 				printTree(t, depth + 1);
 			}
 		}
-		System.out.println(depth + ", " + node.maxValue);
+		node.data.drawBoard();
+		System.out.println("\nDepth: " + depth + ", Heuristic: " + node.maxValue);
+		Board boardCopy = new Board(node.data);
+		System.out.println("Larva path score: " + boardCopy.checkLarvaPath(boardCopy, 0) + "\n");
 	}
 
 	// Identical to printTree but writes the output to a file
@@ -175,16 +178,5 @@ public class TreeNode {
 
 	public Board getBoard() {
 		return new Board(this.data);
-	}
-
-	public static void main(String[] args) {
-
-		Board board = new Board();
-		TreeNode tree = new TreeNode(board, 2);
-		tree.addChildren(3);
-		tree.computeMiniMax(tree);
-		tree.dumpMiniMax(tree, 0);
-		Board newBoard = tree.decideMove(tree);
-		//newBoard.drawBoard();
 	}
 }

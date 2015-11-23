@@ -55,8 +55,9 @@ public class Player_VS_AI {
 			System.out.println("\nAI's turn\n");
 			
 			TreeNode tree = new TreeNode(board, 2);
-			tree.addChildren(3); // Create a minimax tree of depth 3
+			tree.addChildren(4); // Create a minimax tree of depth 4
 			tree.computeMiniMax(tree); // Calculate the heuristic value at the node
+			//tree.printTree(tree, 0); // Debugging only
 			tree.dumpMiniMax(tree, 0); // Dump the results into a text file
 			Board updatedBoard = tree.decideMove(tree); // Execute the move and return the updated board
 			String AIMove = Board.compareBoards(board, updatedBoard); // Determine the AI's move as <old coordinates><new coordinates>

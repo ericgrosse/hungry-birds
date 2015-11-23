@@ -38,7 +38,7 @@ public class Player_VS_Player {
 				if (moves.contains(input)) {
 					board.movePiece(larvaCoordinates, input);
 					board.drawBoard();
-
+					
 					if(board.checkForWin("player1")) {
 						System.out.println("Player 1 wins");
 						System.exit(0);

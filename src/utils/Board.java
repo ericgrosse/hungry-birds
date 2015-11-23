@@ -26,25 +26,135 @@ public class Board {
 
 	// Calculates the heuristic value for the current board configuration
 	public int heuristic() {
-
-		int larvaPosition = 0;
-		int[] birdPositions = new int[4];
-		int j = 0;
-
-		// Determine the location of all your pieces
+		
+		int result = 0;
+		
+		String larvaCoordinates = this.locatePiece("L");
+		ArrayList<String> moves = this.determineMoves(larvaCoordinates);
+		
+		/** Logic for checking wins */
+		
+		if(this.checkForWin("player1")) {
+			result += 10000;
+		}
+		else if(this.checkForWin("player2")) {
+			result -= 10000;
+		}
+		
+		/** End of logic for checking wins */
+		
+		/** Logic for checking if the larva has a safe path to the finish */
+		
+		Board boardCopy = new Board(this);
+		result += checkLarvaPath(boardCopy, 0);
+		
+		/** End of logic for checking if the larva has a safe path to the finish */
+		
+		/** Logic for row and column positions */
+		
+		// If a bird is above the larva and not blocking its move, the bird is being totally useless
+		
+		// Find the bird & larva positions
+		ArrayList<Integer> birdPositions = new ArrayList<Integer>();
+		int larvaPosition = coordinatesToPosition(larvaCoordinates);
+		
 		for(int i = 0; i < board.length; ++i) {
-			if(board[i].equals("L")) {
-				larvaPosition = (i+1);
-			}
-			else if(board[i].equals("B")) {
-				birdPositions[j] = (i+1);
-				++j;
+			if(board[i].equals("B")) {
+				birdPositions.add(i);
 			}
 		}
+		
+		for(Integer birdPosition: birdPositions) {
+			int birdRow = (int) Math.ceil((double) (birdPosition + 1) / 8);
+			int larvaRow = (int) Math.ceil((double) (larvaPosition + 1) / 8);
+			
+			// Row logic
+			if(birdRow <= larvaRow) {
+				int difference = larvaRow - birdRow + 1;
+				// Difference^2 to reinforce how bad it is for the bird to be several rows above
+				result += difference * difference * 50;
+			}
+			else {
+				int difference = birdRow - larvaRow + 1;
+				// It's not a huge advantage if the larva is several rows above the bird
+				result -= difference * 10;
+			}
+		}
+		
+		// Column logic
+		// The birds prefer that the larva is on the edge of the board
+		int larvaColumn = (larvaPosition % 8) + 1;
+		
+		if(larvaColumn <= 4) {
+			result -= (4 - larvaColumn) * 10;
+		}
+		else if(larvaColumn >= 5) {
+			result -= (larvaColumn - 5) * 10;
+		}
+		
+		/** End of logic for row and column positions */
+		
+		/** Logic for blocking Larva moves */
+		
+		ArrayList<String> validMoves = new ArrayList<String>();
 
-		int birdPositionSum = birdPositions[0] + birdPositions[1] + birdPositions[2] + birdPositions[3];
-		int result = larvaPosition - birdPositionSum;
-
+		if(validateMove(larvaCoordinates, "ul")) {
+			validMoves.add("ul");
+		}
+		if(validateMove(larvaCoordinates, "ur")) {
+			validMoves.add("ur");
+		}
+		if(validateMove(larvaCoordinates, "dl")) {
+			validMoves.add("dl");
+		}
+		if(validateMove(larvaCoordinates, "dr")) {
+			validMoves.add("dr");
+		}
+		
+		// Larva can move anywhere
+		if(moves.size() == 4) {
+			result += 10;
+		}
+		else if(moves.size() == 3) {
+			if(!validMoves.contains("dl") || !validMoves.contains("dr")) {
+				// If the only move the bird prevents is downwards, this gets assigned a higher weight
+				result -= 25; 
+			}
+			else if(!validMoves.contains("ul") || !validMoves.contains("ur")) {
+				result -= 5;
+			}
+		}
+		else if(moves.size() == 2) {
+			if(validMoves.contains("ul") && validMoves.contains("ur")) {
+				result -= 100;
+			}
+			else if(validMoves.contains("ur") && validMoves.contains("dr")) {
+				result -= 50;
+			}
+			else if(validMoves.contains("dr") && validMoves.contains("dl")) {
+				// If you don't block the larva's down-left and down-right movements, that's very unfavorable
+				result -= 15;
+			}
+			else if(validMoves.contains("dl") && validMoves.contains("ul")) {
+				result -= 50;
+			}
+		}
+		else if(moves.size() == 1) {
+			if(validMoves.contains("ul") || validMoves.contains("ur")) {
+				result -= 1000;
+			}
+			else if(validMoves.contains("dl") || validMoves.contains("dr")) {
+				// If the only valid move is something downwards, we're not too happy
+				result -= 75; 
+			}
+		}
+		// Larva cannot move
+		else if(moves.size() == 0) {
+			result -= 10000;
+		}
+		
+		/** End of logic for blocking larva moves */
+		
 		return result;
 
 	}
@@ -91,6 +201,39 @@ public class Board {
 		}
 		
 		return "";
+	}
+	
+	public int checkLarvaPath(Board board, int depth) {
+		
+		String larvaCoordinates = board.locatePiece("L");
+		int score = 0;
+		
+		if(board.validateMove(larvaCoordinates, "dl")) {
+			Board boardCopy = new Board(board);
+			String newCoordinates = boardCopy.translatePiece(larvaCoordinates, "dl");
+			boardCopy.movePiece(larvaCoordinates, newCoordinates);
+			if(boardCopy.checkForWin("player1")) {
+				score += (int)(10000 / Math.pow(2, depth));
+				return score;
+			}
+			else {
+				score += checkLarvaPath(boardCopy, depth + 1);
+			}	
+		}
+		if(board.validateMove(larvaCoordinates, "dr")) {
+			Board boardCopy = new Board(board);
+			String newCoordinates = boardCopy.translatePiece(larvaCoordinates, "dr");
+			boardCopy.movePiece(larvaCoordinates, newCoordinates);
+			if(boardCopy.checkForWin("player1")) {
+				score += (int)(10000 / Math.pow(2, depth));
+				return score;
+			}
+			else {
+				score += checkLarvaPath(boardCopy, depth + 1);
+			}	
+		}
+			
+		return score;
 	}
 
 	/**
