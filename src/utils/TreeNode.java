@@ -145,7 +145,7 @@ public class TreeNode {
 		}
 
 		node.data.writeBoard(p);
-		p.println("\n\nDepth: " + depth + ", Mini-Max Heuristic: " + node.maxValue);
+		p.println("\n\nDepth: " + depth + ", Mini-Max Heuristic: " + (node.player == 1 ? node.maxValue : node.minValue));
 		Board boardCopy = new Board(node.data);
 		p.println("True heuristic: " + boardCopy.heuristic());
 		p.println("Check for win bonus: " + boardCopy.checkForWin);
