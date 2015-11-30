@@ -27,6 +27,8 @@ public class TreeNode {
 		this.data = data;
 		this.player = player;
 		this.children = new LinkedList<TreeNode>();
+		this.minValue = 999999;
+		this.maxValue = -999999;
 	}
 
 	public TreeNode addChild(Board child) {
@@ -85,24 +87,20 @@ public class TreeNode {
 				computeMiniMax(t, depth + 1);
 
 				if(node.player == 1) {
-					node.maxValue = Math.max(node.maxValue, t.maxValue);
-					node.minValue = node.maxValue;
+					node.maxValue = Math.max(node.maxValue, t.minValue);
 				}
 				else if(node.player == 2) {
-					node.minValue = Math.min(node.minValue, t.minValue);
-					node.maxValue = node.minValue;
+					node.minValue = Math.min(node.minValue, t.maxValue);
 				}
 			}
 		}
 		// At a leaf node
 		else {
 			if(node.player == 1) {
-				node.minValue = node.data.heuristic();
-				node.maxValue = 999999;
+				node.maxValue = node.data.heuristic();
 			}
 			else if(node.player == 2) {
-				node.minValue = -999999;
-				node.maxValue = node.data.heuristic();
+				node.minValue = node.data.heuristic();
 			}
 		}
 	}
@@ -185,10 +183,10 @@ public class TreeNode {
 		}
 		
 		if(node.player == 1) {
-			writer.println("Depth: " + depth + ", heuristic: " + node.minValue);
+			writer.println("Depth: " + depth + ", heuristic: " + node.maxValue);
 		}
 		else if(node.player == 2) {
-			writer.println("Depth: " + depth + ", heuristic: " + node.maxValue);
+			writer.println("Depth: " + depth + ", heuristic: " + node.minValue);
 		}
 
 		if(node.parent == null) {
