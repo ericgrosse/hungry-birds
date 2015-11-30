@@ -1,4 +1,5 @@
 package utils;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -6,7 +7,15 @@ public class Board {
 
 	private String[] board = new String[64];
 	private static String[] coordinateBoard = new String[64];
-
+	// Debug attributes
+	public int checkForWin = 0;
+	public int[] birdPositionLogic = new int[4];
+	public int larvaColumnLogic = 0;
+	public int blockedSpaceScore = 0;
+	public int larvaNewColumnLogic = 0;
+	public int nextRowLogic1 = 0;
+	public int nextRowLogic2 = 0;
+	
 	/**
 	 * Constructors
 	 */
@@ -41,6 +50,9 @@ public class Board {
 			result -= 10000;
 		}
 		
+		// Debug
+		checkForWin = result;
+		
 		/** End of logic for checking wins */
 		
 		/** Logic for checking if the larva has a safe path to the finish */
@@ -64,32 +76,80 @@ public class Board {
 			}
 		}
 		
+		// Debugging
+		int k = 0;
+		
+		int larvaRow = (int) Math.ceil((double) (larvaPosition + 1) / 8);
+		int larvaColumn = (larvaPosition % 8) + 1;
+		
+		int birdsLeft = 0;
+		int birdsRight = 0;
+		int birdsMiddle = 0;
+		
 		for(Integer birdPosition: birdPositions) {
-			int birdRow = (int) Math.ceil((double) (birdPosition + 1) / 8);
-			int larvaRow = (int) Math.ceil((double) (larvaPosition + 1) / 8);
+			int birdRow = (int) Math.ceil((double) (birdPosition + 1) / 8);	
+			int birdColumn = (birdPosition % 8) + 1;
 			
 			// Row logic
 			if(birdRow <= larvaRow) {
 				int difference = larvaRow - birdRow + 1;
 				// Difference^2 to reinforce how bad it is for the bird to be several rows above
 				result += difference * difference * 50;
+				// Debugging
+				birdPositionLogic[k] = difference * difference * 50;
+				++k;
 			}
 			else {
-				int difference = birdRow - larvaRow + 1;
+				int difference = birdRow - larvaRow;
 				// It's not a huge advantage if the larva is several rows above the bird
-				result -= difference * 10;
+				result -= difference * 5;
+				// Debugging
+				birdPositionLogic[k] = -difference * 5;
+				++k;
+			}
+			
+			// Column logic
+			if(larvaColumn == birdColumn) {
+				birdsMiddle += 1;
+			}
+			else if(larvaColumn > birdColumn) {
+				birdsLeft += 1;
+			}
+			else if(larvaColumn < birdColumn) {
+				birdsRight += 1;
+			}
+			
+			// Combined row & column logic
+			if(birdRow == (larvaRow + 1) && Math.abs(larvaColumn - birdColumn) > 1 ) {
+				result += 25;
+				nextRowLogic1 = 25;
+			}
+			if(birdRow == (larvaRow + 2) && Math.abs(larvaColumn - birdColumn) > 2 ) {
+				result += 25;
+				nextRowLogic2 = 25;
 			}
 		}
 		
-		// Column logic
-		// The birds prefer that the larva is on the edge of the board
-		int larvaColumn = (larvaPosition % 8) + 1;
+		if(birdsLeft == 4 || birdsRight == 4) {
+			result += 5000; // Basically a free win for the bird
+			larvaNewColumnLogic = 5000;
+		}
+		else if( (birdsLeft == 3 && larvaColumn >= 5) || (birdsRight == 3 && larvaColumn <= 4) ) {
+			result += 500; // Really need to fine-tune this
+			// Debugging
+			larvaNewColumnLogic = 500;
+		}
 		
+		// The birds prefer that the larva is on the edge of the board
 		if(larvaColumn <= 4) {
 			result -= (4 - larvaColumn) * 10;
+			// Debugging
+			larvaColumnLogic = -(4 - larvaColumn) * 10;
 		}
 		else if(larvaColumn >= 5) {
 			result -= (larvaColumn - 5) * 10;
+			// Debugging
+			larvaColumnLogic = -(larvaColumn - 5) * 10;
 		}
 		
 		/** End of logic for row and column positions */
@@ -110,6 +170,9 @@ public class Board {
 		if(validateMove(larvaCoordinates, "dr")) {
 			validMoves.add("dr");
 		}
+		
+		//Debugging
+		int resultOld = result;
 		
 		// Larva can move anywhere
 		if(moves.size() == 4) {
@@ -152,6 +215,8 @@ public class Board {
 		else if(moves.size() == 0) {
 			result -= 10000;
 		}
+		
+		blockedSpaceScore = result - resultOld;
 		
 		/** End of logic for blocking larva moves */
 		
@@ -207,13 +272,14 @@ public class Board {
 		
 		String larvaCoordinates = board.locatePiece("L");
 		int score = 0;
+		int powerBase = 10;
 		
 		if(board.validateMove(larvaCoordinates, "dl")) {
 			Board boardCopy = new Board(board);
 			String newCoordinates = boardCopy.translatePiece(larvaCoordinates, "dl");
 			boardCopy.movePiece(larvaCoordinates, newCoordinates);
 			if(boardCopy.checkForWin("player1")) {
-				score += (int)(10000 / Math.pow(2, depth));
+				score += (int)(10000 / Math.pow(powerBase, depth));
 				return score;
 			}
 			else {
@@ -225,7 +291,7 @@ public class Board {
 			String newCoordinates = boardCopy.translatePiece(larvaCoordinates, "dr");
 			boardCopy.movePiece(larvaCoordinates, newCoordinates);
 			if(boardCopy.checkForWin("player1")) {
-				score += (int)(10000 / Math.pow(2, depth));
+				score += (int)(10000 / Math.pow(powerBase, depth));
 				return score;
 			}
 			else {
@@ -552,6 +618,32 @@ public class Board {
 		System.out.println();
 		drawVeritcalBorder();
 
+	}
+	
+	public void writeBoard(PrintWriter p) {
+		p.println(draw("   ") + "A  B  C  D  E  F  G  H");
+		p.println();
+
+		for(int i = 0; i < board.length; ++i) {
+
+			// Draws left border
+			if(i % 8 == 0) {
+				p.print((8 - i/8) + draw(" ") + draw(board[i]));
+			}
+
+			// Draws right border
+			else if(i % 8 == 7) {
+				p.println(draw(board[i]) + draw(" ") + (8 - i/8));
+			}
+
+			else {
+				p.print(draw(board[i]));
+			}
+
+		}
+
+		p.println();
+		p.println(draw("   ") + "A  B  C  D  E  F  G  H");
 	}
 
 	private static String draw(String c) {

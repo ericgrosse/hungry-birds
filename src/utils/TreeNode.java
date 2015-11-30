@@ -11,11 +11,12 @@ import java.util.List;
 public class TreeNode {
 
 	private Board data;
-	private int heuristic;
 	private int player;
 	private int minValue;
 	private int maxValue;
 	private static int moveNumber = 0;
+	// Debugging
+	public int nodeDepth;
 
 	private TreeNode parent;
 	private List<TreeNode> children;
@@ -25,11 +26,7 @@ public class TreeNode {
 	public TreeNode(Board data, int player) {
 		this.data = data;
 		this.player = player;
-		this.heuristic = data.heuristic();
 		this.children = new LinkedList<TreeNode>();
-		// Experimental
-		this.minValue = 1000;
-		this.maxValue = -1000;
 	}
 
 	public TreeNode addChild(Board child) {
@@ -79,11 +76,13 @@ public class TreeNode {
 		}
 	}
 
-	public void computeMiniMax(TreeNode node) {
-
+	public void computeMiniMax(TreeNode node, int depth) {
+		
+		node.nodeDepth = depth;
+		
 		if(node.children.size() != 0) {
 			for(TreeNode t : node.children) {
-				computeMiniMax(t);
+				computeMiniMax(t, depth + 1);
 
 				if(node.player == 1) {
 					node.maxValue = Math.max(node.maxValue, t.maxValue);
@@ -97,21 +96,29 @@ public class TreeNode {
 		}
 		// At a leaf node
 		else {
-			node.minValue = node.heuristic;
-			node.maxValue = node.heuristic;
-		}
-
-		// Returned to the root
-		if(node.parent == null) {
-			node.heuristic = node.maxValue;
+			if(node.player == 1) {
+				node.minValue = node.data.heuristic();
+				node.maxValue = 999999;
+			}
+			else if(node.player == 2) {
+				node.minValue = -999999;
+				node.maxValue = node.data.heuristic();
+			}
 		}
 	}
 
 	public Board decideMove(TreeNode node) {
 		if(node.children.size() != 0) {
 			for(TreeNode t : node.children) {
-				if(node.heuristic == t.maxValue) {
-					return t.getBoard();
+				if(node.player == 1) {
+					if(node.maxValue == t.maxValue) {
+						return t.getBoard();
+					}
+				}
+				else if(node.player == 2) {
+					if(node.minValue == t.minValue) {
+						return t.getBoard();
+					}		
 				}
 			}
 		}
@@ -129,6 +136,30 @@ public class TreeNode {
 		System.out.println("\nDepth: " + depth + ", Heuristic: " + node.maxValue);
 		Board boardCopy = new Board(node.data);
 		System.out.println("Larva path score: " + boardCopy.checkLarvaPath(boardCopy, 0) + "\n");
+	}
+	
+	public void printTreeToFile(TreeNode node, int depth, PrintWriter p) {
+		// Recursion
+		if(node.children != null) {
+			for(TreeNode t : node.children) {
+				printTreeToFile(t, depth + 1, p);
+			}
+		}
+
+		node.data.writeBoard(p);
+		p.println("\n\nDepth: " + depth + ", Mini-Max Heuristic: " + node.maxValue);
+		Board boardCopy = new Board(node.data);
+		p.println("True heuristic: " + boardCopy.heuristic());
+		p.println("Check for win bonus: " + boardCopy.checkForWin);
+		for(int i = 0; i < 4; ++i) {
+			p.println("Bird row position " + i + " logic: " + boardCopy.birdPositionLogic[i]);
+		}
+		p.println("Larva column position logic: " + boardCopy.larvaColumnLogic);
+		p.println("Larva new column position logic: " + boardCopy.larvaNewColumnLogic);
+		p.println("Larva spaces blocked score: " + boardCopy.blockedSpaceScore);
+		p.println("Next row logic1: " + boardCopy.nextRowLogic1);
+		p.println("Next row logic2: " + boardCopy.nextRowLogic2);
+		p.println("Larva path score: " + boardCopy.checkLarvaPath(boardCopy, 0) + "\n\n");
 	}
 
 	// Identical to printTree but writes the output to a file
@@ -152,8 +183,13 @@ public class TreeNode {
 				dumpMiniMax(t, depth + 1);
 			}
 		}
-
-		writer.println("Depth: " + depth + ", heuristic: " + node.maxValue);
+		
+		if(node.player == 1) {
+			writer.println("Depth: " + depth + ", heuristic: " + node.minValue);
+		}
+		else if(node.player == 2) {
+			writer.println("Depth: " + depth + ", heuristic: " + node.maxValue);
+		}
 
 		if(node.parent == null) {
 			writer.close();
@@ -170,10 +206,6 @@ public class TreeNode {
 		else {
 			return -1;
 		}
-	}
-
-	public int getHeuristic() {
-		return this.heuristic;
 	}
 
 	public Board getBoard() {

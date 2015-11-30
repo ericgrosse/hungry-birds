@@ -1,5 +1,8 @@
 package runtime;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
@@ -55,9 +58,25 @@ public class Player_VS_AI {
 			System.out.println("\nAI's turn\n");
 			
 			TreeNode tree = new TreeNode(board, 2);
-			tree.addChildren(4); // Create a minimax tree of depth 4
-			tree.computeMiniMax(tree); // Calculate the heuristic value at the node
+			tree.addChildren(4); // Create a minimax tree of depth n
+			tree.computeMiniMax(tree, 0); // Calculate the heuristic value at the node
+			
+			/* Debugging */
 			//tree.printTree(tree, 0); // Debugging only
+			/*PrintWriter writer = null;
+			try {
+				writer = new PrintWriter("mini-max-output/mini-max-output-tree.txt", "UTF-8");
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			tree.printTreeToFile(tree, 0, writer);
+			writer.close();*/
+			/* End of debugging */
+			
 			tree.dumpMiniMax(tree, 0); // Dump the results into a text file
 			Board updatedBoard = tree.decideMove(tree); // Execute the move and return the updated board
 			String AIMove = Board.compareBoards(board, updatedBoard); // Determine the AI's move as <old coordinates><new coordinates>

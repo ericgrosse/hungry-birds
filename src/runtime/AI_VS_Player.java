@@ -23,7 +23,7 @@ public class AI_VS_Player {
 			
 			TreeNode tree = new TreeNode(board, 1);
 			tree.addChildren(4); // Create a minimax tree of depth 4
-			tree.computeMiniMax(tree); // Calculate the heuristic value at the node
+			tree.computeMiniMax(tree, 0); // Calculate the heuristic value at the node
 			//tree.printTree(tree, 0); // Debugging only
 			tree.dumpMiniMax(tree, 0); // Dump the results into a text file
 			Board updatedBoard = tree.decideMove(tree); // Execute the move and return the updated board
