@@ -109,12 +109,12 @@ public class TreeNode {
 		if(node.children.size() != 0) {
 			for(TreeNode t : node.children) {
 				if(node.player == 1) {
-					if(node.maxValue == t.maxValue) {
+					if(node.maxValue == t.minValue) {
 						return t.getBoard();
 					}
 				}
 				else if(node.player == 2) {
-					if(node.minValue == t.minValue) {
+					if(node.minValue == t.maxValue) {
 						return t.getBoard();
 					}		
 				}
