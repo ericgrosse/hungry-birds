@@ -276,7 +276,7 @@ public class Board {
 		
 		String larvaCoordinates = board.locatePiece("L");
 		int score = 0;
-		int powerBase = 2;
+		int powerBase = 4;
 		
 		if(board.validateMove(larvaCoordinates, "dl")) {
 			Board boardCopy = new Board(board);

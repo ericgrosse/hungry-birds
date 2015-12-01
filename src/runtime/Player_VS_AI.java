@@ -18,7 +18,7 @@ public class Player_VS_AI {
 		
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter("mini-max-output/moves.txt", "UTF-8");
+			writer = new PrintWriter("mini-max-output/player-vs-AI-moves.txt", "UTF-8");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

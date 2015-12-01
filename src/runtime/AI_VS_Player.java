@@ -1,4 +1,7 @@
 package runtime;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
@@ -7,7 +10,22 @@ import utils.Board;
 import utils.TreeNode;
 
 public class AI_VS_Player {
+	
+	private static int moveNumber = 1;
+	
 	public static void run() {
+		
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter("mini-max-output/AI-vs-player-moves.txt", "UTF-8");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		Board board = new Board();
 		board.drawBoard();
 		
@@ -22,18 +40,23 @@ public class AI_VS_Player {
 			System.out.println("\nAI's turn\n");
 			
 			TreeNode tree = new TreeNode(board, 1);
-			tree.addChildren(4); // Create a minimax tree of depth 4
+			tree.addChildren(4); // Create a minimax tree of depth n
 			tree.computeMiniMax(tree, 0); // Calculate the heuristic value at the node
-			//tree.printTree(tree, 0); // Debugging only
 			tree.dumpMiniMax(tree, 0); // Dump the results into a text file
+			tree.printTreeToFile(tree, 0); // Debugging only
 			Board updatedBoard = tree.decideMove(tree); // Execute the move and return the updated board
 			String AIMove = Board.compareBoards(board, updatedBoard); // Determine the AI's move as <old coordinates><new coordinates>
 			board = new Board(updatedBoard); // Set the game board to the updated board
 			board.drawBoard();
+			writer.println("\nMove " + moveNumber + ": The AI chose the move " + AIMove + "\n");
+			board.writeBoard(writer);
+			writer.flush();
 			System.out.println("\nThe AI chose the move " + AIMove);
+			++moveNumber;
 			
 			if(board.checkForWin("player1")) {
 				System.out.println("Player 1 wins");
+				writer.close();
 				System.exit(0);
 			}
 
@@ -88,9 +111,14 @@ public class AI_VS_Player {
 	
 				boolean isValidMove = board.movePiece(input1, input2);
 				board.drawBoard();
+				writer.println("\nMove " + moveNumber + ": Player 2 chose the move " + input1 + input2 + "\n");
+				board.writeBoard(writer);
+				writer.flush();
+				++moveNumber;
 	
 				if(board.checkForWin("player2")) {
 					System.out.println("Player 2 wins");
+					writer.close();
 					System.exit(0);
 				}		
 				if(isValidMove) {
