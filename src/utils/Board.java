@@ -139,6 +139,10 @@ public class Board {
 			// Debugging
 			larvaNewColumnLogic = 500;
 		}
+		else if(birdsLeft == 2 && birdsRight == 2) {
+			result += 250;
+			larvaNewColumnLogic = 250;
+		}
 		
 		// The birds prefer that the larva is on the edge of the board
 		if(larvaColumn <= 4) {
@@ -272,7 +276,7 @@ public class Board {
 		
 		String larvaCoordinates = board.locatePiece("L");
 		int score = 0;
-		int powerBase = 10;
+		int powerBase = 2;
 		
 		if(board.validateMove(larvaCoordinates, "dl")) {
 			Board boardCopy = new Board(board);

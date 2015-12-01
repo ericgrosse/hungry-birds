@@ -122,42 +122,46 @@ public class TreeNode {
 		}
 		return new Board(); // Keeps the compiler happy
 	}
-
-	public void printTree(TreeNode node, int depth) {
-		// Recursion
-		if(node.children != null) {
-			for(TreeNode t : node.children) {
-				printTree(t, depth + 1);
-			}
-		}
-		node.data.drawBoard();
-		System.out.println("\nDepth: " + depth + ", Heuristic: " + node.maxValue);
-		Board boardCopy = new Board(node.data);
-		System.out.println("Larva path score: " + boardCopy.checkLarvaPath(boardCopy, 0) + "\n");
-	}
 	
-	public void printTreeToFile(TreeNode node, int depth, PrintWriter p) {
+	public void printTreeToFile(TreeNode node, int depth) {
+		
+		if(node.parent == null) {
+			try {
+				writer = new PrintWriter("mini-max-output/mini-max-output-detailed-" + moveNumber + ".txt", "UTF-8");
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		// Recursion
 		if(node.children != null) {
 			for(TreeNode t : node.children) {
-				printTreeToFile(t, depth + 1, p);
+				printTreeToFile(t, depth + 1);
 			}
 		}
-
-		node.data.writeBoard(p);
-		p.println("\n\nDepth: " + depth + ", Mini-Max Heuristic: " + (node.player == 1 ? node.maxValue : node.minValue));
+		
+		node.data.writeBoard(writer);
+		writer.println("\n\nDepth: " + depth + ", Mini-Max Heuristic: " + (node.player == 1 ? node.maxValue : node.minValue));
 		Board boardCopy = new Board(node.data);
-		p.println("True heuristic: " + boardCopy.heuristic());
-		p.println("Check for win bonus: " + boardCopy.checkForWin);
+		writer.println("True heuristic: " + boardCopy.heuristic());
+		writer.println("Check for win bonus: " + boardCopy.checkForWin);
 		for(int i = 0; i < 4; ++i) {
-			p.println("Bird row position " + i + " logic: " + boardCopy.birdPositionLogic[i]);
+			writer.println("Bird row position " + i + " logic: " + boardCopy.birdPositionLogic[i]);
 		}
-		p.println("Larva column position logic: " + boardCopy.larvaColumnLogic);
-		p.println("Larva new column position logic: " + boardCopy.larvaNewColumnLogic);
-		p.println("Larva spaces blocked score: " + boardCopy.blockedSpaceScore);
-		p.println("Next row logic1: " + boardCopy.nextRowLogic1);
-		p.println("Next row logic2: " + boardCopy.nextRowLogic2);
-		p.println("Larva path score: " + boardCopy.checkLarvaPath(boardCopy, 0) + "\n\n");
+		writer.println("Larva column position logic: " + boardCopy.larvaColumnLogic);
+		writer.println("Larva new column position logic: " + boardCopy.larvaNewColumnLogic);
+		writer.println("Larva spaces blocked score: " + boardCopy.blockedSpaceScore);
+		writer.println("Next row logic1: " + boardCopy.nextRowLogic1);
+		writer.println("Next row logic2: " + boardCopy.nextRowLogic2);
+		writer.println("Larva path score: " + boardCopy.checkLarvaPath(boardCopy, 0) + "\n\n");
+		
+		if(node.parent == null) {
+			writer.close();
+		}
 	}
 
 	// Identical to printTree but writes the output to a file
@@ -166,7 +170,7 @@ public class TreeNode {
 		if(node.parent == null) {
 			++moveNumber;
 			try {
-				writer = new PrintWriter("mini-max-output/mini-max-output-" + moveNumber + ".txt", "UTF-8");
+				writer = new PrintWriter("mini-max-output/mini-max-output-simple-" + moveNumber + ".txt", "UTF-8");
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
